@@ -1,15 +1,13 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, status
-
-from src.parsers.models import Item
 from src.parsers.text import URL
 from src.parsers.wild_parser import ParseWB
 from src.tg_api.tele_api import AuthTG
 from telethon import TelegramClient
 from src.env import API_ID, API_HASH
+
 api_id = API_ID
 api_hash = API_HASH
 app = FastAPI()
-
 tg_client = AuthTG(client=TelegramClient('aa', api_id, api_hash))
 
 
@@ -88,7 +86,7 @@ async def send_file(
         return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-@app.post("/wild/any product")
+@app.post("/wild/any-product")
 async def get_wb_data() -> list:
     product_list = []
     for product in await ParseWB(URL).get_products():

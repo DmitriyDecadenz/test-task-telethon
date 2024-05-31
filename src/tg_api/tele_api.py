@@ -1,5 +1,4 @@
 from telethon import TelegramClient
-import asyncio
 
 
 class AuthTG:
@@ -31,13 +30,4 @@ class AuthTG:
         await self.client.connect()
         if not await self.client.is_user_authorized():
             await self.client.send_code_request(phone_number)
-    # "me" is a user object. You can pretty-print
-    # any Telegram object with the "stringify" method:
-    # me = await client.get_me()
-    # print(me.stringify())
-    #
-    # # You can print the message history of any chat:
-    # async for message in client.iter_messages('me'):
-    #     print(message.text)
 
-# asyncio.run(main())

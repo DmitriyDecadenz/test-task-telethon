@@ -5,7 +5,7 @@ from src.parsers.text import PARAMS, HEADERS
 
 class ParseWB:
     def __init__(self, url: str) -> None:
-        self.url = url
+        self.url: str = url
         self._wb_json_data = self._get_wb_json_data()
 
     async def _get_wb_json_data(self) -> Items:
