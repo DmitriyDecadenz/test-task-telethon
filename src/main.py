@@ -1,42 +1,63 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException, status
-from src.tg_api.tele_api import client, get_data_from_tg
 
+from src.parsers.models import Item
+from src.parsers.text import URL
+from src.parsers.wild_parser import ParseWB
+from src.tg_api.tele_api import AuthTG
+from telethon import TelegramClient
+from src.env import API_ID, API_HASH
+api_id = API_ID
+api_hash = API_HASH
 app = FastAPI()
+
+tg_client = AuthTG(client=TelegramClient('aa', api_id, api_hash))
 
 
 @app.post("/login")
-async def login() -> list:
-    return await get_data_from_tg(client)
+async def login(
+        phone_number: str,
+        password: str,
+) -> dict:
+    await tg_client.take_phone(phone_number)
+    await tg_client.take_password(password)
+    await tg_client.send_code(phone_number=phone_number)
+    return status.HTTP_200_OK
 
 
-@app.get("/check/login/{phone_number}")
+@app.post("/login/authorize")
+async def authorize(
+        code: str
+) -> dict:
+    await tg_client.take_tg_code(code)
+    await tg_client.tg_user()
+
+    return status.HTTP_200_OK
+
+
+@app.get("/check/login")
 async def check_login(
         phone_number: str,
-) -> dict:
-    if client.is_connected() is True:
-        return {"status": "ok"}
-    return {"status": "bad"}
+):
+    if await tg_client.client.is_user_authorized() is True:
+        return status.HTTP_200_OK
+    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not authorize')
 
 
 @app.get("/messages/{phone_number}/{username}")
 async def get_messages(
-        phone_number: str,
         username: str,
 ) -> list:
     msg_list = []
     count = 0
     try:
-        async for message in client.iter_messages(username):
+        async for message in tg_client.client.iter_messages(username):
             count += 1
             if count == 50:
                 break
             msg_list.append(message)
+        return msg_list
     except ConnectionError:
         HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    return msg_list
-
-#     print(message.id, message.text)
-#
 
 
 @app.get("/messages/send")
@@ -47,28 +68,31 @@ async def send_messages(
 ):
     try:
         if from_phone is None:
-            await client.send_message(username, messages)
-        await client.send_message(from_phone, messages)
+            await tg_client.client.send_message(username, messages)
+        await tg_client.client.send_message(from_phone, messages)
     except ConnectionError:
-        HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not authorize')
 
 
-@app.get("/messages/send/file")
+@app.post("/messages/send/file")
 async def send_file(
-        from_phone: str = None,
         username: str = None,
         file: UploadFile = File(...)
-) -> dict:
+):
     contents = await file.read()
     try:
-        if from_phone is None:
-            await client.send_file(username, contents)
-            return {"status": "ok"}
-        await client.send_file(from_phone, contents)
-        return {"status": "ok"}
-    except ConnectionError:
-        HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+        await tg_client.client.send_file(username, contents)
+        return status.HTTP_200_OK
+
+    except:
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-if __name__ == '__main__':
-    client.loop.run_until_complete(get_data_from_tg(client=client))
+@app.post("/wild/any product")
+async def get_wb_data() -> list:
+    product_list = []
+    for product in await ParseWB(URL).get_products():
+        product = product.model_dump()
+        product["url"] = f'https://www.wildberries.ru/catalog/{product["id"]}/detail.aspx'
+        product_list.append(product)
+    return product_list
