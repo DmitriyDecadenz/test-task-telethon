@@ -1,0 +1,16 @@
+version: '3.3'
+
+services:
+
+  api:
+    build: .
+    environment:
+      - API_ID=$API_ID
+      - API_HASH=$API_HASH
+
+    volumes:
+      - .:/app/.
+    restart: on-failure
+    env_file: .env
+    ports:
+      - "0.0.0.0:8000:8000"
