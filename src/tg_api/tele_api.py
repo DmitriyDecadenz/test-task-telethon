@@ -24,7 +24,7 @@ class AuthTG:
         self.password = password
         return password
 
-    async def send_code(self, phone_number):
+    async def send_code(self, phone_number: str) -> None:
         await self.client.connect()
         if not await self.client.is_user_authorized():
             await self.client.send_code_request(phone_number)
