@@ -4,8 +4,6 @@ from telethon import TelegramClient
 class AuthTG:
 
     def __init__(self, client: TelegramClient = None) -> None:
-        self.api_id = 21921020
-        self.api_hash = '31938aa34bf7bd88fea9fbfaaff6834d'
         self.client = client
         self.phone_number = None
         self.password = None
