@@ -14,15 +14,15 @@ class AuthTG:
 
     async def take_tg_code(self, code: str) -> str:
         self.code = code
-        return code
+        return self.code
 
     async def take_phone(self, phone_number: str) -> str:
         self.phone_number = phone_number
-        return phone_number
+        return self.phone_number
 
     async def take_password(self, password: str) -> str:
         self.password = password
-        return password
+        return self.password
 
     async def send_code(self, phone_number: str) -> None:
         await self.client.connect()
