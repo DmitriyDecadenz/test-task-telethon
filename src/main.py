@@ -18,7 +18,10 @@ async def login(
 ) -> dict:
     await tg_client.take_phone(phone_number)
     await tg_client.take_password(password)
-    await tg_client.send_code(phone_number=phone_number)
+    try:
+        await tg_client.send_code(phone_number=phone_number)
+    except:
+        HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Wrong password or number")
     return status.HTTP_200_OK
 
 
@@ -45,14 +48,15 @@ async def check_login(
 async def get_messages(
         username: str,
 ) -> list:
+    """Получить первые 50 сообщений """
     msg_list = []
     count = 0
     try:
         async for message in tg_client.client.iter_messages(username):
-            count += 1
             if count == 50:
                 break
             msg_list.append(message)
+            count += 1
         return msg_list
     except ConnectionError:
         HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -64,6 +68,7 @@ async def send_messages(
         from_phone: str = None,
         username: str = None,
 ):
+    """Отправить сообщение"""
     try:
         if from_phone is None:
             await tg_client.client.send_message(username, messages)
@@ -77,6 +82,7 @@ async def send_file(
         username: str = None,
         file: UploadFile = File(...)
 ):
+    """Отправить медиа файл"""
     contents = await file.read()
     try:
         await tg_client.client.send_file(username, contents)
@@ -88,6 +94,7 @@ async def send_file(
 
 @app.post("/wild/any-product")
 async def get_wb_data() -> list:
+    """ Получить первые 10 товаров с wildberries"""
     product_list = []
     for product in await ParseWB(URL).get_products():
         product = product.model_dump()
